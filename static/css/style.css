@@ -1,0 +1,4 @@
+@import "@steff-sson/automation-themes/css/theme.css";
+
+@source "../../templates";
+@source "../../node_modules/@steff-sson/automation-themes/templates";

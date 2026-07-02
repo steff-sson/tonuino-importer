@@ -1,0 +1,124 @@
+{% from "automation-themes/templates/_components.html" import card %}
+
+<div id="preview"{% if split_chunks %} data-split="true"{% endif %}>
+<button type="button"
+        onclick="goToPhase1()"
+        class="text-sm text-text-muted hover:text-accent mb-3 flex items-center gap-1">
+  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+  </svg>
+  Andere Quelle wählen
+</button>
+
+{% call card() %}
+<h2 class="text-base font-semibold text-text mb-2">Vorschau</h2>
+{% if error %}
+<div class="bg-error/10 text-error border border-error/20 rounded-lg p-3 text-sm">{{ error }}</div>
+
+{% elif split_chunks %}
+<dl class="text-sm grid grid-cols-2 gap-x-4 gap-y-1 mb-3">
+  <dt class="text-text-muted">Serie:</dt><dd class="text-text font-semibold">{{ series }}</dd>
+  <dt class="text-text-muted">Tracks:</dt><dd class="text-text">{{ total }}</dd>
+  <dt class="text-text-muted">Folgen:</dt><dd class="text-text">{{ episodes|length }}</dd>
+</dl>
+
+<div class="bg-warning/10 border border-warning/20 rounded-lg p-3 mb-3">
+  <p class="text-sm font-medium" style="color: var(--color-warning, #d97706);">
+    Hörspiel zu groß für einen Ordner
+  </p>
+  <p class="text-xs text-text-muted mt-1 break-words">
+    {{ total }} Tracks überschreiten das Limit von {{ max_tracks }} pro Ordner.
+    Das Hörspiel wird auf {{ split_chunks|length }} Ordner aufgeteilt:
+  </p>
+</div>
+
+{% if free_folders|length < split_chunks|length %}
+<div class="bg-error/10 border border-error/20 rounded-lg p-3 mb-3">
+  <p class="text-sm text-error font-medium">Nicht genügend freie Ordner</p>
+  <p class="text-xs text-text-muted">
+    Benötigt: {{ split_chunks|length }}, verfügbar: {{ free_folders|length }}.
+    Lösche nicht benötigte Ordner oder importiere auf einen anderen Datenträger.
+  </p>
+</div>
+{% else %}
+<div class="overflow-x-auto">
+<table class="w-full text-sm min-w-[320px]">
+  <thead>
+    <tr class="border-b border-border">
+      <th class="text-left py-2 px-2 text-text-muted font-medium w-12">Nr.</th>
+      <th class="text-left py-2 px-2 text-text-muted font-medium w-16">Tracks</th>
+      <th class="text-left py-2 px-3 text-text-muted font-medium">Folgen</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for chunk in split_chunks %}
+    <tr class="border-b border-border/50">
+      <td class="py-2 px-2 font-mono font-bold text-text">{{ '%02d' % chunk.folder_number }}</td>
+      <td class="py-2 px-2 font-mono text-text">
+        <div class="text-sm font-bold">{{ chunk.track_count }}</div>
+        <div class="text-[10px] text-text-muted whitespace-nowrap">{{ '%03d' % chunk.track_start }}–{{ '%03d' % chunk.track_end }}</div>
+      </td>
+      <td class="py-2 px-3 text-text text-xs line-clamp-2 break-words min-w-0" title="{% for ep in chunk.episodes %}{{ ep.title }}{% if not loop.last %}, {% endif %}{% endfor %}">
+        {% for ep in chunk.episodes[:2] %}
+          {{ ep.title }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+        {% if chunk.episodes|length > 2 %}
+          <span class="text-text-muted">+{{ chunk.episodes|length - 2 }}</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<div class="flex items-center gap-2 mt-4">
+  <label class="flex items-center justify-center w-11 h-11 shrink-0 cursor-pointer">
+    <input type="checkbox" id="split-overwrite" name="overwrite"
+           class="rounded border-border bg-surface-light text-accent focus:ring-accent w-5 h-5">
+  </label>
+  <label for="split-overwrite" class="text-sm text-text-muted">
+    Bestehende Ordner überschreiben
+  </label>
+</div>
+
+<button type="button"
+        id="split-import-btn"
+        onclick="startSplitImport()"
+        class="w-full mt-3 bg-accent text-white px-4 py-2 rounded-lg hover:opacity-90 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+  Auf {{ split_chunks|length }} Ordner aufteilen & importieren
+</button>
+
+<p class="text-xs text-text-muted mt-2">
+  Belegt danach {{ split_chunks|length }} weitere Ordner.
+  {{ free_folders|length - split_chunks|length }} bleiben frei.
+</p>
+{% endif %}
+
+{% elif total == 0 %}
+<div class="p-4 bg-error/10 border border-error/20 rounded-lg">
+  <p class="text-error font-medium">Keine MP3-Dateien gefunden</p>
+  <p class="text-sm text-text-muted mt-1">Der Ordner enthält keine MP3-Dateien. Wähle einen anderen Ordner.</p>
+</div>
+
+{% else %}
+<dl class="text-sm grid grid-cols-2 gap-x-4 gap-y-1 mb-3">
+  <dt class="text-text-muted">Serie:</dt><dd class="text-text font-semibold">{{ series }}</dd>
+  <dt class="text-text-muted">Tracks:</dt><dd class="text-text">{{ total }}</dd>
+  <dt class="text-text-muted">Folgen:</dt><dd class="text-text">{{ episodes|length }}</dd>
+</dl>
+
+{% if tracks|length > 0 %}
+<p class="text-xs text-text-muted mb-2">So werden die Dateien umbenannt:</p>
+<div class="bg-surface-light rounded-lg p-3 font-mono text-xs text-text space-y-1 overflow-x-auto">
+  {% for t in tracks[:3] %}
+  <div class="whitespace-nowrap">{{ t.dest_preview }}</div>
+  {% endfor %}
+  {% if tracks|length > 3 %}
+  <div class="text-text-muted whitespace-nowrap">... ({{ tracks|length - 3 }} weitere)</div>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}
+{% endcall %}
+</div>

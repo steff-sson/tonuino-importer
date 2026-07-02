@@ -1,0 +1,24 @@
+{% extends "automation-themes/templates/base.html" %}
+
+{% block title %}TonUINO Importer{% endblock %}
+{% block mobile_icon %}music{% endblock %}
+{% block mobile_header %}TonUINO Importer{% endblock %}
+{% block sidebar_icon %}music{% endblock %}
+{% block sidebar_header %}<a href="/" class="no-underline text-text hover:opacity-80 transition-opacity">TonUINO Importer</a>{% endblock %}
+
+{% block nav_items %}
+  {% from "automation-themes/templates/_components.html" import nav_item %}
+  {{ nav_item("/", "layout-dashboard", "Dashboard", active=(request.url.path == "/")) }}
+  {{ nav_item("/import", "upload", "Import", active=(request.url.path == "/import")) }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<style>
+  .overflow-x-auto::-webkit-scrollbar { height: 4px; }
+  .overflow-x-auto::-webkit-scrollbar-thumb { background: var(--color-border, #ccc); border-radius: 2px; }
+  .overflow-x-auto { scrollbar-width: thin; scrollbar-color: var(--color-border, #ccc) transparent; }
+</style>
+{% endblock %}
+
+{% block sidebar_footer %}v0.1.0{% endblock %}

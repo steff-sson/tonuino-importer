@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}SD-Ordner {{ '%02d' % detail.number }} - TonUINO Importer{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-4">
+  <a href="/#sd" class="text-accent hover:underline text-sm px-2 py-1 -ml-2">← Zurück</a>
+  <h1 class="text-xl font-semibold text-text">SD-Ordner {{ '%02d' % detail.number }}</h1>
+</div>
+
+{% if detail.import_data %}
+<div class="bg-surface rounded-xl border border-border p-5">
+<h2 class="text-base font-semibold text-text mb-2">Import-Info</h2>
+<dl class="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
+  <dt class="text-text-muted">Serie:</dt><dd class="text-text">{{ detail.import_data.series }}</dd>
+  <dt class="text-text-muted">Importiert:</dt><dd class="text-text">{{ detail.import_data.imported_at[:10] }}</dd>
+  <dt class="text-text-muted">Tracks:</dt><dd class="text-text">{{ detail.import_data.total_tracks }}</dd>
+</dl>
+</div>
+{% endif %}
+
+{% if detail.episodes %}
+<div class="bg-surface rounded-xl border border-border p-5 mt-4">
+<h2 class="text-base font-semibold text-text mb-2">Folgen & Track-Zuordnung</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-sm min-w-[320px]">
+  <thead>
+    <tr>
+      <th class="text-left py-2 px-3 text-text-muted font-medium border-b border-border">Folge</th>
+      <th class="text-left py-2 px-3 text-text-muted font-medium border-b border-border">von - bis</th>
+      <th class="text-right py-2 px-3 text-text-muted font-medium border-b border-border w-12">#</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ep in detail.episodes %}
+    <tr>
+      <td class="py-2 px-3 border-b border-border/50 text-text line-clamp-2 break-words min-w-0" title="{{ ep.title }}">{{ ep.title }}</td>
+      <td class="py-2 px-3 border-b border-border/50 font-mono text-text text-xs whitespace-nowrap">{{ '%03d' % ep.track_start }}–{{ '%03d' % ep.track_end }}</td>
+      <td class="py-2 px-3 border-b border-border/50 text-right text-text text-xs">{{ ep.track_end - ep.track_start + 1 }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<div class="bg-surface rounded-xl border border-border p-5 mt-4">
+<h2 class="text-base font-semibold text-text mb-2">Tracks ({{ detail.tracks|length }})</h2>
+{% if detail.tracks %}
+<div class="overflow-x-auto">
+<div class="max-h-96 overflow-y-auto">
+<table class="w-full text-sm min-w-[320px]">
+  <thead class="sticky top-0 bg-surface">
+    <tr>
+      <th class="text-left py-2 px-3 text-text-muted font-medium border-b border-border">Nr.</th>
+      <th class="text-left py-2 px-3 text-text-muted font-medium border-b border-border">Datei</th>
+      <th class="text-right py-2 px-3 text-text-muted font-medium border-b border-border whitespace-nowrap">Größe</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in detail.tracks %}
+    <tr>
+      <td class="py-1 px-3 border-b border-border/50 font-mono text-text">{{ '%03d' % t.num }}</td>
+      <td class="py-1 px-3 border-b border-border/50 text-text line-clamp-2 break-words text-xs min-w-0" title="{{ t.name }}">{{ t.name }}</td>
+      <td class="py-1 px-3 border-b border-border/50 text-right text-text-muted">{{ t.size_kb }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% else %}
+<p class="text-text-muted text-sm">Keine Tracks vorhanden.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Import - TonUINO Importer{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold text-text mb-4">Hörspiel importieren</h1>
+
+<!-- Step-Indicator -->
+<div class="flex items-center gap-2 mb-5 text-xs" id="step-indicator">
+  <span class="step-item flex items-center gap-1 text-accent font-medium" id="step-1">
+    <span class="step-circle w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold">1</span>
+    Quelle wählen
+  </span>
+  <span class="w-4 h-px bg-border"></span>
+  <span class="step-item flex items-center gap-1 text-text-muted" id="step-2">
+    <span class="step-circle w-6 h-6 rounded-full bg-surface-light flex items-center justify-center text-xs">2</span>
+    Import vorbereiten
+  </span>
+</div>
+
+<div id="import-flow" data-step="1">
+
+<!-- Phase 1: Quelle wählen -->
+<div id="phase-1" class="bg-surface rounded-xl border border-border p-5">
+  <h2 class="text-base font-semibold text-text mb-3">Quelle wählen</h2>
+  <p class="text-xs text-text-muted mb-4">
+    <span class="hidden sm:inline">Navigiere zum Ordner mit den MP3-Dateien und klicke auf "Vorschau laden →".</span>
+    <span class="sm:hidden">Ordner auswählen oder mehrere mit ☑ markieren.</span>
+  </p>
+  
+  <!-- File-Browser -->
+  <div id="file-browser"
+       hx-get="/browse/source"
+       hx-trigger="load"
+       hx-swap="innerHTML">
+    <div class="text-text-muted text-sm py-4 text-center">Lade...</div>
+  </div>
+  
+  <!-- Auswahl-Anzeige -->
+  <div id="selection-display" class="hidden mt-4 p-3 bg-success/10 border border-success/20 rounded-lg">
+    <div class="flex items-center gap-2">
+      <span class="text-success">✓</span>
+      <span class="text-sm text-text flex-1" id="selected-path-text"></span>
+      <button type="button" onclick="clearSelection()" class="text-xs text-accent hover:underline">
+        Zurücksetzen
+      </button>
+    </div>
+  </div>
+  
+  <!-- Action-Button -->
+  <button type="button"
+          id="select-folder-btn"
+          onclick="confirmSelection()"
+          disabled
+          class="w-full mt-4 px-4 py-2 rounded-lg bg-accent text-white text-sm 
+                 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+    <span id="btn-text">Vorschau laden →</span>
+    <svg id="btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </button>
+</div>
+
+<!-- Phase 2: Import vorbereiten -->
+<div id="phase-2" class="hidden">
+  <!-- Back button provided by preview partial -->
+  
+  <div id="preview"></div>
+  
+  <div id="import-form-card" class="hidden bg-surface rounded-xl border border-border p-5 mt-4">
+    <h2 class="text-base font-semibold text-text mb-3">Importieren</h2>
+    <form id="import-form">
+      <input type="hidden" name="source" id="import-source">
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-text mb-1">SD-Karten-Ordner</label>
+        <p class="text-xs text-text-muted mb-2">
+          Jeder Ordner (01–99) entspricht einer NFC-Karte.
+          Wähle einen freien Ordner für dieses Hörspiel.
+        </p>
+        <p class="text-xs text-text-muted mb-2 italic">
+          "Frei" = noch keine NFC-Karte programmiert. Bereits belegte Ordner sind grau hinterlegt.
+        </p>
+        <select name="sd_folder" id="sd-folder-select"
+                class="px-3 py-3 bg-surface-light border border-border rounded-lg text-text text-base w-full sm:w-auto">
+          <option value="1">Lade Ordner...</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-2 mt-3">
+        <input type="checkbox" id="overwrite-checkbox" name="overwrite"
+               class="rounded border-border bg-surface-light text-accent focus:ring-accent">
+        <label for="overwrite-checkbox" class="text-sm text-text-muted">
+          Bestehenden Ordner überschreiben (löscht alle vorhandenen Tracks)
+        </label>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button type="submit" id="import-btn"
+                class="bg-accent text-white px-4 py-3 rounded-lg hover:opacity-90 text-base disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">
+          Import starten
+        </button>
+        <button type="button" onclick="startSync()" id="sync-btn"
+                class="bg-surface border border-border text-text-muted px-4 py-3 rounded-lg hover:border-accent hover:text-text text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">
+          SD-Karte aktualisieren
+        </button>
+      </div>
+    </form>
+
+    <div id="progress-container" class="hidden mt-4">
+      <div class="bg-surface-light rounded-full h-4 overflow-hidden">
+        <div id="progress-bar" class="bg-accent h-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <p id="progress-text" class="text-sm text-text-muted mt-1"></p>
+    </div>
+  </div>
+</div>
+
+<div id="result"></div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let state = {
+  selectedPath: null,
+  previewData: null,
+  sdFolder: null
+};
+
+// Multi-select state
+window._multiSelectedPaths = new Set();
+
+// State Management
+function setStep(step) {
+  document.getElementById('import-flow').dataset.step = step;
+  updateStepIndicator(step);
+}
+
+function updateStepIndicator(step) {
+  const steps = document.querySelectorAll('.step-item');
+  steps.forEach((el, i) => {
+    const num = i + 1;
+    el.classList.remove('text-success', 'text-accent', 'text-text-muted');
+    el.classList.remove('font-medium', 'cursor-pointer');
+    el.onclick = null;
+    const circle = el.querySelector('.step-circle');
+    circle.classList.remove('bg-success/20', 'bg-accent/20', 'bg-surface-light', 'text-success', 'text-accent');
+    
+    if (num < step) {
+      // Erledigt - klickbar
+      el.classList.add('text-success', 'cursor-pointer');
+      el.onclick = () => goToStep(num);
+      circle.classList.add('bg-success/20', 'text-success');
+      circle.textContent = '✓';
+    } else if (num === step) {
+      // Aktiv - nicht klickbar
+      el.classList.add('text-accent', 'font-medium');
+      circle.classList.add('bg-accent/20', 'text-accent');
+      circle.textContent = num;
+    } else {
+      // Kommend - nicht klickbar
+      el.classList.add('text-text-muted');
+      circle.classList.add('bg-surface-light');
+      circle.textContent = num;
+    }
+  });
+}
+
+// Phase Navigation
+function goToStep(step) {
+  if (step === 1) goToPhase1();
+  else if (step === 2) goToPhase2();
+}
+
+function goToPhase1() {
+  setStep(1);
+  document.getElementById('phase-1').classList.remove('hidden');
+  document.getElementById('phase-2').classList.add('hidden');
+  document.getElementById('result').innerHTML = '';
+  // Browser + Selection wieder einblenden
+  document.getElementById('file-browser').classList.remove('hidden');
+  if (state.selectedPath) {
+    document.getElementById('selection-display').classList.remove('hidden');
+    document.getElementById('select-folder-btn').disabled = false;
+  }
+}
+
+function goToPhase2() {
+  setStep(2);
+  document.getElementById('phase-1').classList.add('hidden');
+  document.getElementById('phase-2').classList.remove('hidden');
+}
+
+// Folder Selection
+function selectFolder(path) {
+  state.selectedPath = path;
+  document.getElementById('selected-path-text').textContent = path;
+  document.getElementById('selection-display').classList.remove('hidden');
+  document.getElementById('select-folder-btn').disabled = false;
+}
+
+function confirmSelection() {
+  if (!state.selectedPath) return;
+  goToPhase2();
+  document.getElementById('file-browser').classList.add('hidden');
+  document.getElementById('selection-display').classList.add('hidden');
+  document.getElementById('import-source').value = state.selectedPath;
+  document.getElementById('import-form-card').classList.add('hidden');
+  
+  // Show loading state
+  document.getElementById('select-folder-btn').disabled = true;
+  document.getElementById('btn-text').textContent = 'Scanne...';
+  document.getElementById('btn-spinner').classList.remove('hidden');
+  
+  loadFolders(true);
+  
+  // Clear preview before scan
+  const preview = document.getElementById('preview');
+  if (preview) {
+    preview.innerHTML = '';
+  }
+  
+  htmx.ajax('POST', '/api/scan', {
+    target: '#preview',
+    swap: 'outerHTML',
+    values: {source: state.selectedPath}
+  });
+}
+
+// Show import form only on successful scan
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+  if (evt.detail.pathInfo?.requestPath === '/api/scan') {
+    // Reset loading state
+    const btn = document.getElementById('select-folder-btn');
+    const btnText = document.getElementById('btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = 'Vorschau laden →';
+    if (btnSpinner) btnSpinner.classList.add('hidden');
+    
+    const resp = evt.detail.xhr.responseText;
+    const isSplit = resp.includes('data-split="true"');
+    if (resp.includes('bg-error') || isSplit) {
+      document.getElementById('import-form-card')?.classList.add('hidden');
+    } else {
+      document.getElementById('import-form-card')?.classList.remove('hidden');
+    }
+  }
+});
+
+function clearSelection() {
+  state.selectedPath = null;
+  window._multiSelectedPaths = new Set();
+  updateMultiSelectUI();
+  document.getElementById('selection-display').classList.add('hidden');
+  document.getElementById('file-browser').classList.remove('hidden');
+  document.getElementById('select-folder-btn').disabled = true;
+}
+
+function toggleMultiSelect(cb) {
+  if (cb.checked) {
+    window._multiSelectedPaths.add(cb.value);
+  } else {
+    window._multiSelectedPaths.delete(cb.value);
+  }
+  updateMultiSelectUI();
+}
+
+function updateMultiSelectUI() {
+  var count = window._multiSelectedPaths.size;
+  var bar = document.getElementById('multi-select-bar');
+  var singleBtn = document.getElementById('single-select-btn');
+  var countEl = document.getElementById('multi-count');
+  var scanBtn = document.getElementById('scan-selected-btn');
+
+  if (count > 0) {
+    if (bar) bar.classList.remove('hidden');
+    if (singleBtn) singleBtn.classList.add('hidden');
+    if (countEl) countEl.textContent = count;
+    if (scanBtn) scanBtn.textContent = 'Ausgewählte scannen (' + count + ')';
+  } else {
+    if (bar) bar.classList.add('hidden');
+    if (singleBtn) singleBtn.classList.remove('hidden');
+  }
+}
+
+function scanSelectedFolders() {
+  if (window._multiSelectedPaths.size === 0) return;
+  var paths = Array.from(window._multiSelectedPaths);
+
+  const firstPath = paths[0];
+  const commonParent = firstPath.substring(0, firstPath.lastIndexOf('/'));
+  document.getElementById('import-source').value = commonParent;
+  goToPhase2();
+  document.getElementById('file-browser').classList.add('hidden');
+  document.getElementById('selection-display').classList.add('hidden');
+  document.getElementById('import-form-card').classList.add('hidden');
+
+  document.getElementById('select-folder-btn').disabled = true;
+  document.getElementById('btn-text').textContent = 'Scanne...';
+  document.getElementById('btn-spinner').classList.remove('hidden');
+
+  loadFolders(true);
+
+  var preview = document.getElementById('preview');
+  if (preview) preview.innerHTML = '';
+
+  fetch('/api/scan-multiple', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({paths: paths})
+  })
+  .then(function(r) { return r.text(); })
+  .then(function(html) {
+    document.getElementById('select-folder-btn').disabled = false;
+    document.getElementById('btn-text').textContent = 'Vorschau laden →';
+    document.getElementById('btn-spinner').classList.add('hidden');
+
+    var previewEl = document.getElementById('preview');
+    if (previewEl) previewEl.outerHTML = html;
+
+    var isSplit = html.indexOf('data-split="true"') !== -1;
+    if (html.indexOf('bg-error') !== -1 || isSplit) {
+      var card = document.getElementById('import-form-card');
+      if (card) card.classList.add('hidden');
+    } else {
+      var card = document.getElementById('import-form-card');
+      if (card) card.classList.remove('hidden');
+    }
+  })
+  .catch(function() {
+    document.getElementById('select-folder-btn').disabled = false;
+    document.getElementById('btn-text').textContent = 'Vorschau laden →';
+    document.getElementById('btn-spinner').classList.add('hidden');
+  });
+}
+
+function startSplitImport() {
+  const source = document.getElementById('import-source').value;
+  if (!source) return;
+
+  const overwrite = document.getElementById('split-overwrite')?.checked || false;
+  const btn = document.getElementById('split-import-btn');
+  btn.disabled = true;
+  btn.textContent = 'Importiere...';
+
+  var body = {source: source, overwrite: overwrite};
+  if (window._multiSelectedPaths && window._multiSelectedPaths.size > 0) {
+    body.paths = Array.from(window._multiSelectedPaths);
+  }
+
+  fetch('/api/import/split-start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.task_id) startProgress(data.task_id, btn);
+    else {
+      btn.disabled = false;
+      btn.textContent = 'Aufteilen & importieren';
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.textContent = 'Aufteilen & importieren';
+  });
+}
+
+// Load SD folder list
+function loadFolders(selectDefault) {
+  fetch('/api/sd/folders')
+    .then(r => r.json())
+    .then(data => {
+      const sel = document.getElementById('sd-folder-select');
+      sel.innerHTML = '';
+      data.folders.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.number;
+        opt.textContent = f.label;
+        sel.appendChild(opt);
+      });
+      if (selectDefault) sel.value = data.default;
+    });
+}
+
+// Import form submit
+document.getElementById('import-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const source = document.getElementById('import-source').value;
+  const sdFolder = form.querySelector('[name="sd_folder"]').value;
+  const btn = document.getElementById('import-btn');
+  btn.disabled = true;
+
+  var body = {
+    source: source,
+    sd_folder: parseInt(sdFolder),
+    overwrite: document.getElementById('overwrite-checkbox').checked
+  };
+  if (window._multiSelectedPaths && window._multiSelectedPaths.size > 0) {
+    body.paths = Array.from(window._multiSelectedPaths);
+  }
+
+  fetch('/api/import/start', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.task_id) startProgress(data.task_id, btn);
+  })
+  .catch(() => { btn.disabled = false; });
+});
+
+function startSync() {
+  const btn = document.getElementById('sync-btn');
+  btn.disabled = true;
+  fetch('/api/sync', {method: 'POST'})
+  .then(r => r.json())
+  .then(data => {
+    if (data.task_id) startProgress(data.task_id, btn);
+  })
+  .catch(() => { btn.disabled = false; });
+}
+
+function startProgress(taskId, btn) {
+  document.getElementById('progress-container').classList.remove('hidden');
+  const source = new EventSource('/api/import/progress/' + taskId);
+  source.addEventListener('progress', function(e) {
+    const d = JSON.parse(e.data);
+    document.getElementById('progress-bar').style.width = d.percent + '%';
+    document.getElementById('progress-text').textContent = d.file + ' (' + d.current + '/' + d.total + ')';
+  });
+  source.addEventListener('complete', function(e) {
+    const d = JSON.parse(e.data);
+    document.getElementById('progress-bar').style.width = '100%';
+    document.getElementById('progress-text').textContent = 'Abgeschlossen!';
+    source.close();
+    if (btn) btn.disabled = false;
+
+    let html = '<div class="mt-4 p-4 bg-success/10 border border-success/20 rounded-lg">';
+    html += '<h3 class="font-semibold text-success mb-2">Fertig</h3>';
+
+    if (d.folders) {
+      // Multi-folder result
+      html += '<p class="text-sm text-text">' + d.total_tracks + ' Tracks auf ' + d.folders.length + ' Ordner verteilt.</p>';
+      html += '<div class="overflow-x-auto mt-3"><table class="text-sm w-full"><thead><tr><th class="text-left py-1 text-text-muted">Ordner</th><th class="text-left py-1 text-text-muted">Tracks</th><th class="text-left py-1 text-text-muted">Folgen</th></tr></thead><tbody>';
+      d.folders.forEach(f => {
+        html += '<tr>';
+        html += '<td class="py-1"><a href="/sd/' + f.folder_number + '" class="text-accent hover:underline font-mono">' + String(f.folder_number).padStart(2, '0') + '</a></td>';
+        html += '<td class="py-1 text-text font-mono">' + f.track_count + '</td>';
+        html += '<td class="py-1 text-text text-xs">' + (f.episodes ? f.episodes.map(ep => ep.title).join(', ') : '—') + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+    } else if (d.total_tracks) {
+      // Single-folder result (existing logic)
+      html += '<p class="text-sm text-text">' + d.total_tracks + ' Tracks in Ordner ' + d.sd_folder + '</p>';
+    } else if (d.message) {
+      html += '<p class="text-sm text-text">' + d.message + '</p>';
+    }
+
+    // Episode table (single-folder only — multi-folder has its own table above)
+    if (!d.folders && d.episodes && d.episodes.length) {
+      html += '<p class="text-xs text-text-muted mt-2 mb-1">Track-Nummern für deine NFC-Karten:</p>';
+      html += '<div class="overflow-x-auto mt-2"><table class="text-sm w-full"><thead><tr><th class="text-left py-1 text-text-muted">Folge</th><th class="text-left py-1 text-text-muted">Track-Nr. (erster–letzter)</th></tr></thead><tbody>';
+      d.episodes.forEach(ep => {
+        html += '<tr><td class="py-1 text-text">' + ep.title + '</td><td class="py-1 text-text">' + String(ep.track_start).padStart(3,'0') + '-' + String(ep.track_end).padStart(3,'0') + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    // Link to SD folder (single-folder only)
+    if (d.sd_folder) {
+      html += '<p class="mt-2"><a href="/sd/' + d.sd_folder + '" class="text-accent hover:underline text-sm">→ SD-Ordner ansehen</a></p>';
+    }
+
+    html += '<button onclick="resetAll()" class="inline-flex items-center gap-1 mt-3 text-sm text-accent hover:underline">← Neues Hörspiel importieren</button>';
+    html += '</div>';
+    document.getElementById('result').innerHTML = html;
+  });
+  source.addEventListener('error', function(e) {
+    const d = JSON.parse(e.data);
+    document.getElementById('progress-text').textContent = 'Fehler: ' + d.message;
+    document.getElementById('progress-bar').classList.add('bg-error');
+    source.close();
+    if (btn) btn.disabled = false;
+  });
+}
+
+function resetAll() {
+  state = {selectedPath: null, previewData: null, sdFolder: null};
+  window._multiSelectedPaths = new Set();
+  updateMultiSelectUI();
+  document.getElementById('overwrite-checkbox').checked = false;
+  const splitOverwrite = document.getElementById('split-overwrite');
+  if (splitOverwrite) splitOverwrite.checked = false;
+  goToPhase1();
+  clearSelection();
+  document.getElementById('preview').innerHTML = '';
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('import-source').value = '';
+}
+</script>
+{% endblock %}

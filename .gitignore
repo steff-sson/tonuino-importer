@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+static/css/output.css
+sd-card-complete/
+.env
+*.egg-info/
+dist/
+build/
+.opencode/

@@ -1,0 +1,140 @@
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-1 text-sm mb-3 flex-wrap" aria-label="Breadcrumb">
+  <a href="#" hx-get="/browse/"
+     hx-target="#file-browser" hx-swap="innerHTML"
+     class="text-accent hover:underline">🏠</a>
+  {% for crumb in crumbs %}
+  {% if crumb.name %}
+  <span class="text-text-muted">/</span>
+  {% if loop.last %}
+  <span class="text-text font-medium">{{ crumb.name }}</span>
+  {% else %}
+  <a href="#" hx-get="/browse/{{ crumb.path }}"
+     hx-target="#file-browser" hx-swap="innerHTML"
+     class="text-accent hover:underline">{{ crumb.name }}</a>
+  {% endif %}
+  {% endif %}
+  {% endfor %}
+</nav>
+
+<!-- Suchfeld -->
+<div class="mb-3">
+  <input type="search"
+         name="q"
+         id="search-input"
+         value="{{ query }}"
+         placeholder="Filtern..."
+         oninput="filterSearch(this.value)"
+         class="w-full px-3 py-2 bg-surface-light border border-border rounded-lg text-sm text-text
+                placeholder:text-text-muted focus:outline-none focus:border-accent">
+</div>
+
+<!-- Inhalt: Ordner + Dateien als List-View -->
+<div class="max-h-80 overflow-y-auto border border-border rounded-lg">
+  {% if not items %}
+    <div class="p-4 text-sm text-text-muted text-center">Keine Einträge</div>
+  {% endif %}
+  {% if parent_path is not none %}
+  <div class="flex items-center gap-2 px-3 py-2 border-b border-border hover:bg-surface-light cursor-pointer"
+       hx-get="/browse/{{ parent_path }}"
+       hx-target="#file-browser"
+       hx-swap="innerHTML">
+    <svg class="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+    </svg>
+    <span class="text-sm text-text-muted font-medium">..</span>
+  </div>
+  {% endif %}
+  {% for item in items %}
+  <div class="flex items-center gap-2 px-3 py-3 border-b border-border last:border-b-0
+              hover:bg-surface-light transition-colors
+              {% if item.type == 'folder' %}
+              cursor-pointer
+              {% else %}
+              cursor-default
+              {% endif %}"
+       {% if item.type == 'folder' %}
+       onclick="selectFolder('{{ item.rel_path }}')"
+       {% endif %}">
+    {% if item.type == 'folder' and item.has_mp3 %}
+    <label class="flex items-center justify-center w-11 h-11 shrink-0 cursor-pointer"
+           onclick="event.stopPropagation()">
+      <input type="checkbox"
+             class="multi-select-checkbox rounded border-border bg-surface-light text-accent shrink-0 focus:ring-accent w-5 h-5"
+             value="{{ item.rel_path }}"
+             onchange="toggleMultiSelect(this)">
+    </label>
+    {% endif %}
+    <!-- Icon -->
+    {% if item.type == "folder" %}
+    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+    </svg>
+    {% else %}
+    <svg class="w-4 h-4 text-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.5 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7.5L14.5 2z"/>
+    </svg>
+    {% endif %}
+
+    <!-- Name + Navigation -->
+    <span class="text-sm text-text flex-1 line-clamp-2 break-words min-w-0
+                 {% if item.type == 'folder' %}
+                 hover:text-accent
+                 {% endif %}"
+          {% if item.type == 'folder' %}
+          hx-get="/browse/{{ item.rel_path }}"
+          hx-target="#file-browser"
+          hx-swap="innerHTML"
+          hx-push-url="false"
+          onclick="selectFolder('{{ item.rel_path }}')"
+          {% endif %}>
+      {{ item.name }}
+    </span>
+
+    <!-- MP3-Badge -->
+    {% if item.has_mp3 %}
+    <span class="text-xs text-success font-medium px-1.5 py-0.5 bg-success/10 rounded shrink-0">🎵 MP3</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Aktionen -->
+<div class="flex gap-2 mt-4 items-center">
+  <div id="multi-select-bar" class="hidden flex items-center gap-3 flex-1">
+    <span class="text-sm text-text-muted">
+      <span id="multi-count">0</span> ausgewählt
+    </span>
+    <button type="button" id="scan-selected-btn"
+            onclick="scanSelectedFolders()"
+            class="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:opacity-90 w-full sm:w-auto sm:ml-auto">
+      Ausgewählte scannen
+    </button>
+  </div>
+  <button type="button" id="single-select-btn"
+          onclick="selectFolder('{{ current_path }}'); confirmSelection();"
+          class="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:opacity-90 w-full sm:w-auto sm:ml-auto">
+    Diesen Ordner auswählen
+  </button>
+</div>
+
+<script>
+function filterSearch(query) {
+  const currentPath = "{{ crumbs[-1].path if crumbs else '' }}";
+  const url = `/browse/${currentPath}?q=${encodeURIComponent(query)}`;
+  htmx.ajax('GET', url, {target: '#file-browser', swap: 'innerHTML'});
+}
+
+// Sync checkboxes with global multi-select state after HTMX swap
+(function() {
+  var cbs = document.querySelectorAll('.multi-select-checkbox');
+  if (window._multiSelectedPaths) {
+    cbs.forEach(function(cb) {
+      cb.checked = window._multiSelectedPaths.has(cb.value);
+    });
+  }
+  if (typeof updateMultiSelectUI === 'function') {
+    updateMultiSelectUI();
+  }
+})();
+</script>

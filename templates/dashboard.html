@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TonUINO Importer{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold text-text mb-4">Übersicht</h1>
+
+<div class="bg-surface rounded-xl border border-border p-5">
+<h2 class="text-base font-semibold text-text mb-3">Übersicht</h2>
+<div class="grid grid-cols-2 gap-2 sm:gap-4 text-center mb-4">
+  <div>
+    <div class="text-2xl font-bold text-accent">{{ stats.folders_used }}<span class="text-sm text-text-muted font-normal"> / 99</span></div>
+    <div class="text-sm text-text-muted">Ordner belegt</div>
+  </div>
+  <div>
+    <div class="text-2xl font-bold text-accent">{{ stats.total_size_gb }}<span class="text-sm text-text-muted font-normal"> GB</span></div>
+    <div class="text-sm text-text-muted">auf SD-Karte</div>
+  </div>
+</div>
+</div>
+
+<div id="sd" class="bg-surface rounded-xl border border-border p-5 mt-4">
+<h2 class="text-base font-semibold text-text mb-3">SD-Ordner</h2>
+<p class="text-sm text-text-muted mb-3">{{ folders|length }} Ordner belegt, {{ total_empty }} frei (von 99).</p>
+{% if folders %}
+<div class="overflow-x-auto">
+<table class="w-full text-sm">
+  <thead>
+    <tr class="border-b border-border">
+      <th class="text-left py-3 px-4 text-text-muted font-medium w-14">Nr.</th>
+      <th class="text-left py-3 px-4 text-text-muted font-medium">Hörspiel</th>
+      <th class="text-right py-3 px-4 text-text-muted font-medium w-20">Tracks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for folder in folders %}
+    <tr class="border-b border-border/50 hover:bg-accent/5 transition cursor-pointer"
+        onclick="location.href='/sd/{{ folder.number }}'">
+      <td class="py-3 px-4 font-mono font-bold text-text">{{ '%02d' % folder.number }}</td>
+      <td class="py-3 px-4 text-text line-clamp-2 break-words max-w-[140px] sm:max-w-[200px]" title="{{ folder.display_title }}">{{ folder.display_title or '—' }}</td>
+      <td class="py-3 px-4 text-right text-text-muted font-mono">{{ folder.track_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="mt-3 text-xs text-text-muted text-right flex items-center justify-end gap-1">
+  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+  Klick auf eine Zeile für Details.
+</div>
+{% else %}
+<p class="text-text-muted text-sm">Keine SD-Ordner belegt.</p>
+{% endif %}
+</div>
+
+<a href="/import"
+   class="flex sm:inline-flex items-center justify-center gap-2 mt-4 w-full sm:w-auto bg-accent text-white px-4 py-2 rounded-lg hover:opacity-90 text-sm">
+  Hörspiel importieren
+</a>
+{% endblock %}

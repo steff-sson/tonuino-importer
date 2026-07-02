@@ -1,23 +1,42 @@
 # TonUINO Importer
 
-**Status:** In Entwicklung (Plan abgeschlossen, Implementierung ausstehend)
-
 Web-App zum Importieren von Hörspielen für die TonUINO NFC-Musikbox.
-
-## Architektur-Plan
-
-Detaillierte Planung unter: `.opencode/plans/tonuino-importer.md`
 
 ## Tech-Stack
 
-- **Backend:** FastAPI
-- **Datenbank:** SQLite
-- **Frontend:** HTMX + automation-themes
-- **Deployment:** Docker
+- **Backend:** FastAPI + Jinja2 + HTMX
+- **Frontend:** automation-themes (Tailwind CSS)
+- **Daten:** Dateisystem + `.import.json` (keine DB)
+- **Deployment:** Docker (Media-Stack, SWAG Reverse Proxy, kein Port-Exposure)
 
 ## MVP-Scope
 
-- Scan & Import von Hörspielen
+- 2-Phasen-Flow: Quelle wählen → Import vorbereiten
+- Scan & Import von Hörspielen mit Umbenennung
 - SSE-Progress (Live-Statusanzeige)
-- Von-Bis-Anzeige
-- Docker-Deployment
+- Von-Bis-Anzeige (aus `.import.json`)
+- ≤255 Track-Limit
+- File-Browser mit Breadcrumb + List-View
+
+## Starten
+
+```bash
+# Dev
+make install
+make dev
+
+# Docker (Media-Stack)
+cd /home/stef/docker/media
+docker compose up -d tonuino-importer
+```
+
+## Erreichbarkeit
+
+- **Intern:** `http://192.168.198.10:8501` (Port-Exposure)
+- **Extern:** `https://tonuino.weitzelnet.com` (SWAG + Authelia)
+
+## Architektur-Pläne
+
+- `.opencode/plans/tonuino-importer.md` — Hauptarchitektur
+- `.opencode/plans/sd-card-download.md` — SD-Card-Download (entfernt)
+- `.opencode/plans/media-stack-swag-sd-cleanup.md` — Media-Stack + SWAG

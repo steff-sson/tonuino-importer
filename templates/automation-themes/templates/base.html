@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de" class="bg-background text-text">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Automation{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/output.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    .sidebar { width: 200px; }
+    .sidebar-overlay { display: none; }
+    .sidebar-overlay.open { display: block; }
+    @media (max-width: 768px) {
+      .sidebar { width: 75vw; position: fixed; right: 0; top: 0; z-index: 50; transform: translateX(100%); transition: transform 0.25s ease; border-right: none; border-left: 1px solid var(--color-border); overflow-y: auto; }
+      .sidebar.open { transform: translateX(0); }
+      main { padding-top: 56px !important; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="flex min-h-screen bg-background text-text">
+
+  <!-- Mobile Header -->
+  <div class="md:hidden fixed top-0 left-0 right-0 z-30 bg-surface border-b border-border px-4 py-3 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-2 no-underline text-text hover:opacity-80 transition-opacity">
+      <i data-lucide="{% block mobile_icon %}zap{% endblock %}" class="w-5 h-5 text-accent"></i>
+      <span class="text-sm font-medium">{% block mobile_header %}automation{% endblock %}</span>
+    </a>
+    <button onclick="toggleSidebar()" class="text-text-muted hover:text-text p-1 rounded">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+  </div>
+
+  <!-- Mobile Overlay -->
+  <div class="sidebar-overlay fixed inset-0 bg-black/20 z-40" onclick="toggleSidebar()"></div>
+
+  <!-- Content (centered) -->
+  <main class="flex-1 p-6 flex justify-center">
+    <div class="w-full max-w-4xl">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="sidebar bg-surface border-l border-border flex flex-col shrink-0 h-screen sticky top-0">
+    <div class="flex items-center justify-between p-4 border-b border-border">
+      <div class="flex items-center gap-2">
+        <i data-lucide="{% block sidebar_icon %}zap{% endblock %}" class="w-5 h-5 text-accent"></i>
+        <span class="text-sm font-medium">{% block sidebar_header %}automation{% endblock %}</span>
+      </div>
+      <button onclick="toggleSidebar()" class="md:hidden text-text-muted hover:text-text p-1 rounded">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <nav class="flex flex-col gap-1 p-2 flex-1">
+      {% block nav_items %}{% endblock %}
+    </nav>
+    <div class="text-xs text-text-muted p-4 border-t border-border sidebar-footer-text">
+      {% block sidebar_footer %}{% endblock %}
+    </div>
+  </aside>
+
+  <script>
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('open');
+      document.querySelector('.sidebar-overlay').classList.toggle('open');
+    }
+
+    function closeSidebar() {
+      document.querySelector('.sidebar').classList.remove('open');
+      document.querySelector('.sidebar-overlay').classList.remove('open');
+    }
+
+    lucide.createIcons();
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

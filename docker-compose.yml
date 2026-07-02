@@ -1,0 +1,17 @@
+---
+services:
+  tonuino-importer:
+    build: .
+    image: tonuino-importer:latest
+    container_name: tonuino-importer
+    environment:
+      - TZ=Europe/Berlin
+      - SOURCE_DIR=/source
+      - DEST_DIR=/app/sd-card-complete
+    volumes:
+      - /srv/nfs/hoerspiele:/source:ro
+      - ./sd-card-complete:/app/sd-card-complete
+      - /media/usb/SD-CARD:/media/usb/SD-CARD
+    ports:
+      - "8501:8501"
+    restart: unless-stopped

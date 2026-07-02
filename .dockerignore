@@ -1,0 +1,14 @@
+node_modules
+__pycache__
+*.pyc
+.venv
+sd-card-complete
+test-source
+.git
+.opencode
+*.egg-info
+dist
+build
+static/css/output.css
+templates/automation-themes/templates/_components.html
+examples

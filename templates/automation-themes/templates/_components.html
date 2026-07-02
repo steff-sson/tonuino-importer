@@ -1,0 +1,118 @@
+{# Shared Jinja2 components for automation-themes #}
+{# Usage: {% from "_components.html" import nav_item, status_badge, section_header, metric_card, gradient_card, stat_card, card, input, btn %} #}
+
+{%- macro nav_item(href, icon, label, active=false) %}
+<a href="{{ href }}"
+   onclick="closeSidebar()"
+   class="nav-item flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors
+          {% if active %}bg-orange/10 text-orange font-medium
+          {% else %}text-text-muted hover:bg-surface-light hover:text-text{% endif %}">
+  <i data-lucide="{{ icon }}" class="w-4 h-4 shrink-0"></i>
+  <span class="nav-label">{{ label }}</span>
+</a>
+{%- endmacro %}
+
+{%- macro status_badge(status, color=None) %}
+{% set display_status = 'no data' if status == 'unknown' else status %}
+{% set colors = {
+  'success': 'bg-green-500/20 text-green-700',
+  'error': 'bg-red-500/20 text-red-700',
+  'warning': 'bg-yellow-500/20 text-yellow-700',
+  'unknown': 'bg-gray-500/20 text-gray-500',
+  'no data': 'bg-gray-500/20 text-text-muted',
+  'running': 'bg-blue-500/20 text-blue-700'
+} %}
+{% set color_class = colors[display_status] if display_status in colors else (color or 'bg-gray-500/20 text-gray-500') %}
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {{ color_class }}">
+  <span class="w-1.5 h-1.5 rounded-full {% if display_status == 'success' %}bg-green-500{% elif display_status == 'error' %}bg-red-500{% elif display_status == 'warning' %}bg-yellow-500{% elif display_status == 'running' %}bg-blue-500{% else %}bg-gray-400{% endif %}"></span>
+  {{ display_status }}
+</span>
+{%- endmacro %}
+
+{%- macro section_header(title, icon=None) %}
+<div class="flex items-center gap-2 mb-3 mt-8 first:mt-0">
+  {% if icon %}<i data-lucide="{{ icon }}" class="w-4 h-4 text-accent"></i>{% endif %}
+  <h2 class="text-xs font-semibold text-text-muted uppercase tracking-wider">{{ title }}</h2>
+</div>
+{%- endmacro %}
+
+{%- macro metric_card(label, value, status=None, icon=None) %}
+<div class="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+  <div class="flex items-center gap-2">
+    {% if icon %}<i data-lucide="{{ icon }}" class="w-3.5 h-3.5 text-text-muted"></i>{% endif %}
+    <span class="text-sm text-text-muted">{{ label }}</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <span class="text-sm font-medium text-text">{{ value }}</span>
+    {% if status %}{{ status_badge(status) }}{% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{%- macro gradient_card(title, description=None, icon=None, gradient="from-charcoal to-prussian", href=None) %}
+<div class="bg-gradient-to-br {{ gradient }} rounded-xl p-5 border border-border/30 relative overflow-hidden">
+  {% if icon %}
+  <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-3">
+    <i data-lucide="{{ icon }}" class="w-5 h-5 text-text"></i>
+  </div>
+  {% endif %}
+  <h3 class="text-base font-semibold text-text mb-1">{{ title }}</h3>
+  {% if description %}
+  <p class="text-sm text-text-muted leading-relaxed">{{ description }}</p>
+  {% endif %}
+  {% if href %}
+  <a href="{{ href }}" class="inline-flex items-center gap-1 text-sm text-accent mt-3 hover:underline">
+    <span>Mehr erfahren</span>
+    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+  </a>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{%- macro stat_card(label, value, change=None, icon=None, gradient="from-charcoal to-prussian") %}
+<div class="bg-gradient-to-br {{ gradient }} rounded-xl p-5 border border-border/30">
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-sm text-text-muted">{{ label }}</span>
+    {% if icon %}<i data-lucide="{{ icon }}" class="w-4 h-4 text-text-muted"></i>{% endif %}
+  </div>
+  <div class="text-2xl font-bold text-text">{{ value }}</div>
+  {% if change %}
+  <div class="flex items-center gap-1 mt-1">
+    {% if change > 0 %}
+    <i data-lucide="trending-up" class="w-3.5 h-3.5 text-green-400"></i>
+    <span class="text-xs text-green-400">+{{ change }}%</span>
+    {% elif change < 0 %}
+    <i data-lucide="trending-down" class="w-3.5 h-3.5 text-red-400"></i>
+    <span class="text-xs text-red-400">{{ change }}%</span>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{%- macro card(class="") %}
+<div class="bg-surface rounded-xl p-5 border border-border shadow-lg shadow-black/15 mb-4 {{ class }}">
+  {{ caller() }}
+</div>
+{%- endmacro %}
+
+{%- macro input(label, name, type="text", placeholder="", required=false, value="", class="") %}
+<div class="mb-4">
+  <label class="block text-sm font-medium text-text mb-1">{{ label }}</label>
+  <input type="{{ type }}" name="{{ name }}" {% if required %}required{% endif %} {% if value %}value="{{ value }}"{% endif %}
+         placeholder="{{ placeholder }}"
+         class="w-full px-3 py-2 bg-surface-light border border-border rounded-lg text-text text-sm {{ class }}">
+</div>
+{%- endmacro %}
+
+{%- macro btn(label, type="submit", variant="primary", class="") %}
+{% set variants = {
+  'primary': 'bg-accent text-white hover:opacity-90',
+  'secondary': 'bg-surface-light text-text border border-border hover:bg-border',
+  'danger': 'bg-error text-white hover:opacity-90',
+  'success': 'bg-success text-white hover:opacity-90'
+} %}
+<button type="{{ type }}" class="px-4 py-2 rounded-lg text-sm transition-colors {{ variants.get(variant, variants.primary) }} {{ class }}">
+  {{ label }}
+</button>
+{%- endmacro %}
