@@ -37,6 +37,7 @@ static/              # CSS (Tailwind Output)
 - `/api/import/progress/{id}` — SSE-Fortschritt
 - `/api/sd/folders` — Alle 99 Ordner mit Belegungsstatus (GET)
 - `/sd` — SD-Ordner-Übersicht (01-99)
+- `.github/workflows/docker-build.yml` — CI/CD Pipeline (Docker-Image Build + Push)
 
 ## Neue Funktionen
 
@@ -66,6 +67,10 @@ static/              # CSS (Tailwind Output)
 - **Volumes:**
   - `Hoerspiele:/source:ro` (NFS-Volume)
   - `./tonuino/sd-card-complete:/app/sd-card-complete`
+- **CI/CD:** GitHub Actions (`.github/workflows/docker-build.yml`) — Push auf `master` → Build + Push nach `ghcr.io/steff-sson/tonuino-importer` (Tags: `latest`, `sha-<commit>`, `master`)
+- **Registry:** `ghcr.io/steff-sson/tonuino-importer` (public, anonym pullbar)
+- **Server:** Media-Stack `docker-compose.yml` nutzt `image: ghcr.io/steff-sson/tonuino-importer:latest`
+- **Auto-Update:** Watchtower (optional, noch nicht installiert)
 
 ## Features (entfernt)
 
