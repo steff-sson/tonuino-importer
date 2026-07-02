@@ -9,3 +9,4 @@ sd-card-complete/
 dist/
 build/
 .opencode/
+examples/

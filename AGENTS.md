@@ -61,7 +61,7 @@ static/              # CSS (Tailwind Output)
 ## Deployment
 
 - **Media-Stack:** `/home/stef/docker/media/docker-compose.yml`
-- **SWAG:** `tonuino.weitzelnet.com` (Authelia-geschützt)
+- **SWAG:** `<your-domain>` (Authelia-geschützt)
 - **Kein Port-Exposure** (außer Dev)
 - **Volumes:**
   - `Hoerspiele:/source:ro` (NFS-Volume)

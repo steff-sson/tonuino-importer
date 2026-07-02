@@ -32,8 +32,8 @@ docker compose up -d tonuino-importer
 
 ## Erreichbarkeit
 
-- **Intern:** `http://192.168.198.10:8501` (Port-Exposure)
-- **Extern:** `https://tonuino.weitzelnet.com` (SWAG + Authelia)
+- **Intern:** `http://<host-ip>:8501` (Port-Exposure)
+- **Extern:** `https://<your-domain>` (SWAG + Authelia)
 
 ## Architektur-Pläne
 
