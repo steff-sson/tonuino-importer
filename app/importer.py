@@ -62,7 +62,7 @@ async def run_import(
         imported_files.append(dest_name)
 
         # Episode-Gruppierung
-        episode_title = _extract_episode_title(mp3.stem)
+        episode_title = _extract_episode_title(mp3.stem) or source.name
         if episode_title and (current_episode is None or current_episode["title"] != episode_title):
             if current_episode:
                 current_episode["track_end"] = global_num - 1
@@ -218,8 +218,8 @@ def _parse_track_num(stem: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _extract_episode_title(stem: str) -> str:
-    """Extract episode title for grouping."""
+def _extract_episode_title(stem: str) -> str | None:
+    """Extract episode title for grouping. Returns None if no episode marker found."""
     import re
     cleaned = re.sub(r"^\d{1,4}\s*[-–]\s*", "", stem)
     # Strip trailing per-episode track number (e.g. " - 01" at end)
@@ -235,4 +235,4 @@ def _extract_episode_title(stem: str) -> str:
         if m.group(2):
             title += f" - {m.group(2)}"
         return title
-    return cleaned
+    return None

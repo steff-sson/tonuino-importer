@@ -41,7 +41,7 @@ def scan_source(source: Path) -> dict:
         dest_name = build_dest_name(stem, global_num) + ".mp3"
 
         # Gruppierung: Folge-/Episode-Erkennung
-        episode_base = _normalize_episode(stem)
+        episode_base = _normalize_episode(stem) or series
 
         if episode_base and (current_episode is None or current_episode["title"] != episode_base):
             if current_episode:
@@ -96,7 +96,7 @@ def scan_multiple_sources(sources: list[Path]) -> dict:
     for mp3 in all_mp3s:
         stem = mp3.stem
         dest_name = build_dest_name(stem, global_num) + ".mp3"
-        episode_base = _normalize_episode(stem)
+        episode_base = _normalize_episode(stem) or series
         if episode_base and (current_episode is None or current_episode["title"] != episode_base):
             if current_episode:
                 current_episode["track_end"] = global_num - 1
@@ -213,8 +213,8 @@ class TrackLimitError(Exception):
     pass
 
 
-def _normalize_episode(stem: str) -> str:
-    """Extract episode title for grouping."""
+def _normalize_episode(stem: str) -> str | None:
+    """Extract episode title for grouping. Returns None if no episode marker found."""
     cleaned = LEADING_NUM.sub("", stem)
     # Strip trailing per-episode track number (e.g. " - 01" at end)
     cleaned = re.sub(r"\s*[-–]\s*\d{1,3}$", "", cleaned)
@@ -229,4 +229,4 @@ def _normalize_episode(stem: str) -> str:
         if m.group(2):
             title += f" - {m.group(2)}"
         return title
-    return cleaned
+    return None
