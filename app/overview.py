@@ -93,6 +93,21 @@ def get_stats() -> dict:
     }
 
 
+def clear_folder(folder_num: int) -> int:
+    """Löscht alle MP3s + .import.json im angegebenen SD-Ordner."""
+    folder = DEST_DIR / f"{folder_num:02d}"
+    if not folder.exists():
+        return 0
+    count = 0
+    for f in folder.glob("*.mp3"):
+        f.unlink()
+        count += 1
+    import_file = folder / ".import.json"
+    if import_file.exists():
+        import_file.unlink()
+    return count
+
+
 def _load_import_json(folder: Path) -> dict | None:
     p = folder / ".import.json"
     if p.exists():

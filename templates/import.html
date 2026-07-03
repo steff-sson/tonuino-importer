@@ -101,10 +101,7 @@
                 class="bg-accent text-white px-4 py-3 rounded-lg hover:opacity-90 text-base disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">
           Import starten
         </button>
-        <button type="button" onclick="startSync()" id="sync-btn"
-                class="bg-surface border border-border text-text-muted px-4 py-3 rounded-lg hover:border-accent hover:text-text text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto">
-          SD-Karte aktualisieren
-        </button>
+
       </div>
     </form>
 
@@ -349,7 +346,17 @@ function startSplitImport() {
   btn.disabled = true;
   btn.textContent = 'Importiere...';
 
-  var body = {source: source, overwrite: overwrite};
+  // Einsammeln der gewählten Ordner
+  var folderAssignments = {};
+  document.querySelectorAll('.chunk-folder').forEach(function(sel) {
+    folderAssignments[sel.dataset.chunk] = parseInt(sel.value);
+  });
+
+  var body = {
+    source: source,
+    overwrite: overwrite,
+    folder_assignments: folderAssignments
+  };
   if (window._multiSelectedPaths && window._multiSelectedPaths.size > 0) {
     body.paths = Array.from(window._multiSelectedPaths);
   }
@@ -420,16 +427,7 @@ document.getElementById('import-form')?.addEventListener('submit', function(e) {
   .catch(() => { btn.disabled = false; });
 });
 
-function startSync() {
-  const btn = document.getElementById('sync-btn');
-  btn.disabled = true;
-  fetch('/api/sync', {method: 'POST'})
-  .then(r => r.json())
-  .then(data => {
-    if (data.task_id) startProgress(data.task_id, btn);
-  })
-  .catch(() => { btn.disabled = false; });
-}
+
 
 function startProgress(taskId, btn) {
   document.getElementById('progress-container').classList.remove('hidden');
@@ -438,6 +436,11 @@ function startProgress(taskId, btn) {
     const d = JSON.parse(e.data);
     document.getElementById('progress-bar').style.width = d.percent + '%';
     document.getElementById('progress-text').textContent = d.file + ' (' + d.current + '/' + d.total + ')';
+    var statusEl = document.getElementById('import-status');
+    if (statusEl) {
+      statusEl.classList.remove('hidden');
+      statusEl.textContent = 'Importiere: ' + d.file + ' (' + d.current + '/' + d.total + ')';
+    }
   });
   source.addEventListener('complete', function(e) {
     const d = JSON.parse(e.data);

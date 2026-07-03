@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
-from ..overview import get_sd_folders, get_folder_detail
+from ..overview import get_sd_folders, get_folder_detail, clear_folder
 from ..render import render
 
 router = APIRouter()
@@ -43,3 +43,11 @@ async def api_sd_folders():
     # Default: erster freier Ordner
     next_free = next((f["number"] for f in folders if not f["occupied"]), 1)
     return JSONResponse({"folders": folders, "default": next_free})
+
+
+@router.post("/api/sd/{folder_num}/clear")
+async def clear_sd_folder(folder_num: int):
+    if folder_num < 1 or folder_num > 99:
+        return JSONResponse(status_code=400, content={"error": "Ungültige Ordnernummer (1-99)"})
+    count = clear_folder(folder_num)
+    return {"status": "ok", "folder": f"{folder_num:02d}", "deleted": count}

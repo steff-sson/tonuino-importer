@@ -45,7 +45,7 @@
 <table class="w-full text-sm min-w-[320px]">
   <thead>
     <tr class="border-b border-border">
-      <th class="text-left py-2 px-2 text-text-muted font-medium w-12">Nr.</th>
+      <th class="text-left py-2 px-2 text-text-muted font-medium">Ordner</th>
       <th class="text-left py-2 px-2 text-text-muted font-medium w-16">Tracks</th>
       <th class="text-left py-2 px-3 text-text-muted font-medium">Folgen</th>
     </tr>
@@ -53,12 +53,24 @@
   <tbody>
     {% for chunk in split_chunks %}
     <tr class="border-b border-border/50">
-      <td class="py-2 px-2 font-mono font-bold text-text">{{ '%02d' % chunk.folder_number }}</td>
+      <td class="py-2 px-2">
+        <select class="chunk-folder bg-surface border border-border rounded px-2 py-1 text-sm text-text"
+                data-chunk="{{ loop.index0 }}">
+          {% for f in free_folders %}
+          <option value="{{ f }}" {% if f == chunk.folder_number %}selected{% endif %}>
+            {{ '%02d' % f }}
+          </option>
+          {% endfor %}
+        </select>
+      </td>
       <td class="py-2 px-2 font-mono text-text">
         <div class="text-sm font-bold">{{ chunk.track_count }}</div>
-        <div class="text-[10px] text-text-muted whitespace-nowrap">{{ '%03d' % chunk.track_start }}–{{ '%03d' % chunk.track_end }}</div>
+        <div class="text-[10px] text-text-muted whitespace-nowrap">
+          {{ '%03d' % chunk.track_start }}–{{ '%03d' % chunk.track_end }}
+        </div>
       </td>
-      <td class="py-2 px-3 text-text text-xs line-clamp-2 break-words min-w-0" title="{% for ep in chunk.episodes %}{{ ep.title }}{% if not loop.last %}, {% endif %}{% endfor %}">
+      <td class="py-2 px-3 text-text text-xs line-clamp-2 break-words min-w-0"
+          title="{% for ep in chunk.episodes %}{{ ep.title }}{% if not loop.last %}, {% endif %}{% endfor %}">
         {% for ep in chunk.episodes[:2] %}
           {{ ep.title }}{% if not loop.last %}, {% endif %}
         {% endfor %}
@@ -121,4 +133,5 @@
 {% endif %}
 {% endif %}
 {% endcall %}
+<div id="import-status" class="hidden text-sm text-text-muted mt-2"></div>
 </div>

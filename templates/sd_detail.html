@@ -48,6 +48,22 @@
 <div class="bg-surface rounded-xl border border-border p-5 mt-4">
 <h2 class="text-base font-semibold text-text mb-2">Tracks ({{ detail.tracks|length }})</h2>
 {% if detail.tracks %}
+<button onclick="clearFolder({{ detail.number }})"
+        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm mb-4">
+  Ordner leeren
+</button>
+
+<script>
+function clearFolder(num) {
+  if (!confirm("Ordner " + String(num).padStart(2,'0') + " wirklich leeren?\nAlle Tracks werden gelöscht.")) return;
+  fetch('/api/sd/' + num + '/clear', {method: 'POST'})
+  .then(r => r.json())
+  .then(data => {
+    if (data.status === 'ok') window.location.href = '/';
+  });
+}
+</script>
+
 <div class="overflow-x-auto">
 <div class="max-h-96 overflow-y-auto">
 <table class="w-full text-sm min-w-[320px]">

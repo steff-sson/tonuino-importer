@@ -148,6 +148,7 @@ class SplitImportRequest(BaseModel):
     source: str
     overwrite: bool = False
     paths: list[str] | None = None
+    folder_assignments: dict[str, int] | None = None
 
 
 class ScanMultipleRequest(BaseModel):
@@ -296,15 +297,27 @@ async def api_split_import_start(req: SplitImportRequest):
             )
             free_folders = get_free_folders(len(chunks))
 
-            if len(free_folders) < len(chunks):
-                raise ValueError(
-                    f"Nicht genügend freie Ordner: {len(chunks)} benötigt, "
-                    f"nur {len(free_folders)} verfügbar"
-                )
+            if req.folder_assignments:
+                # User hat Ordner manuell gewählt
+                for chunk_idx, chunk in enumerate(chunks):
+                    if str(chunk_idx) in req.folder_assignments:
+                        chunk["folder_number"] = req.folder_assignments[str(chunk_idx)]
+                    else:
+                        chunk["folder_number"] = free_folders[chunk_idx]
+            else:
+                # Fallback: automatisch zuweisen (bestehendes Verhalten)
+                for i, chunk in enumerate(chunks):
+                    chunk["folder_number"] = free_folders[i]
 
-            # Assign folder numbers
-            for i, chunk in enumerate(chunks):
-                chunk["folder_number"] = free_folders[i]
+            # Validierung: alle Ordner 1-99, keine Duplikate
+            seen = set()
+            for chunk in chunks:
+                fn = chunk["folder_number"]
+                if fn < 1 or fn > 99:
+                    raise ValueError(f"Ungültige Ordnernummer: {fn}")
+                if fn in seen:
+                    raise ValueError(f"Ordner {fn:02d} mehrfach zugewiesen")
+                seen.add(fn)
 
             # Run split import
             result = await run_split_import(
@@ -320,26 +333,4 @@ async def api_split_import_start(req: SplitImportRequest):
     return {"task_id": task_id}
 
 
-@router.post("/api/sync")
-async def api_sync():
-    task_id = str(uuid.uuid4())[:8]
-    _tasks[task_id] = {"status": "running", "progress": None, "result": None, "error": None}
 
-    async def progress_cb(current: int, total: int, file: str = ""):
-        _tasks[task_id]["progress"] = {
-            "current": current, "total": total, "file": file,
-            "percent": round(current / total * 100, 1) if total else 0,
-        }
-
-    async def _run():
-        try:
-            from ..rsync import run_rsync
-            result = await run_rsync(task_id=task_id, progress_cb=progress_cb)
-            _tasks[task_id]["status"] = "complete"
-            _tasks[task_id]["result"] = result
-        except Exception as e:
-            _tasks[task_id]["status"] = "error"
-            _tasks[task_id]["error"] = str(e)
-
-    asyncio.create_task(_run())
-    return {"task_id": task_id}
