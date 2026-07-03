@@ -19,58 +19,105 @@ def find_mp3s(path: Path) -> list[Path]:
     ]
 
 
+def _get_visible_subdirs(path: Path) -> list[Path]:
+    """Return visible subdirectories, excluding hidden, @eaDir, and non-directories."""
+    return sorted(
+        [d for d in path.iterdir()
+         if d.is_dir() and not d.name.startswith('.') and d.name != '@eaDir'],
+        key=lambda d: str(d).lower()
+    )
+
+
+def _scan_single(source: Path, start_num: int = 1) -> dict:
+    """Core scan logic: detect subdirs, build tracks + episodes.
+
+    Returns dict with keys: tracks, total, episodes.
+    Global track numbering starts at start_num.
+    """
+    subdirs = _get_visible_subdirs(source)
+
+    if subdirs:
+        return _scan_with_subdirs(source, subdirs, start_num)
+    else:
+        return _scan_flat(source, start_num)
+
+
+def _scan_with_subdirs(source: Path, subdirs: list[Path], start_num: int) -> dict:
+    """Rule 1: each subdir = one episode."""
+    tracks = []
+    episodes = []
+    global_num = start_num
+
+    for subdir in subdirs:
+        ep_start = global_num
+        mp3s = natsorted(find_mp3s(subdir))
+        if not mp3s:
+            continue  # empty subdir — skip silently
+        for mp3 in mp3s:
+            dest_name = build_dest_name(mp3.stem, global_num) + ".mp3"
+            tracks.append({
+                "src": str(mp3),
+                "src_name": mp3.name,
+                "dest_preview": dest_name,
+                "global_num": global_num,
+            })
+            global_num += 1
+        episodes.append({
+            "title": subdir.name,
+            "track_start": ep_start,
+            "track_end": global_num - 1,
+        })
+
+    return {"tracks": tracks, "total": len(tracks), "episodes": episodes}
+
+
+def _scan_flat(source: Path, start_num: int) -> dict:
+    """Rule 2: no subdirs — all MP3s = one episode."""
+    mp3s = natsorted(find_mp3s(source))
+    if not mp3s:
+        return {"tracks": [], "total": 0, "episodes": []}
+
+    tracks = []
+    for i, mp3 in enumerate(mp3s, start_num):
+        dest_name = build_dest_name(mp3.stem, i) + ".mp3"
+        tracks.append({
+            "src": str(mp3),
+            "src_name": mp3.name,
+            "dest_preview": dest_name,
+            "global_num": i,
+        })
+
+    return {
+        "tracks": tracks,
+        "total": len(tracks),
+        "episodes": [{
+            "title": source.name,
+            "track_start": start_num,
+            "track_end": start_num + len(tracks) - 1,
+        }],
+    }
+
+
 def scan_source(source: Path) -> dict:
-    """Scan SOURCE directory recursively for mp3 files. Returns preview dict."""
+    """Scan SOURCE directory for mp3 files.
+
+    - Has subdirs → each subdir = one episode (Rule 1)
+    - No subdirs → all MP3s = one episode, title = source.name (Rule 2)
+    """
     if not source.exists():
         raise FileNotFoundError(f"Pfad nicht gefunden: {source}")
     if not source.is_dir():
         raise NotADirectoryError(f"Kein Verzeichnis: {source}")
 
-    mp3s = natsorted(find_mp3s(source))
-    if not mp3s:
-        return {"series": source.name, "tracks": [], "total": 0, "episodes": []}
-
-    series = source.name
-    tracks = []
-    episodes = []
-    current_episode = None
-    global_num = 1
-
-    for mp3 in mp3s:
-        stem = mp3.stem
-        dest_name = build_dest_name(stem, global_num) + ".mp3"
-
-        # Gruppierung: Folge-/Episode-Erkennung
-        episode_base = _normalize_episode(stem) or series
-
-        if episode_base and (current_episode is None or current_episode["title"] != episode_base):
-            if current_episode:
-                current_episode["track_end"] = global_num - 1
-                episodes.append(current_episode)
-            current_episode = {"title": episode_base, "track_start": global_num, "track_end": 0}
-
-        tracks.append({
-            "src": str(mp3),
-            "src_name": mp3.name,
-            "dest_preview": dest_name,
-            "global_num": global_num,
-        })
-        global_num += 1
-
-    if current_episode:
-        current_episode["track_end"] = global_num - 1
-        episodes.append(current_episode)
-
+    result = _scan_single(source, 1)
     return {
-        "series": series,
-        "tracks": tracks,
-        "total": len(tracks),
-        "episodes": episodes,
+        "series": source.name,
+        **result,
     }
 
 
 def scan_multiple_sources(sources: list[Path]) -> dict:
-    """Scan multiple source directories and merge into one preview dict."""
+    """Scan multiple source directories. Each processed through Rule 1/2, merged."""
     if not sources:
         raise ValueError("Keine Quellverzeichnisse angegeben")
     for s in sources:
@@ -79,40 +126,23 @@ def scan_multiple_sources(sources: list[Path]) -> dict:
         if not s.is_dir():
             raise NotADirectoryError(f"Kein Verzeichnis: {s}")
 
-    all_mp3s = []
-    for s in sorted(sources, key=lambda p: str(p).lower()):
-        all_mp3s.extend(natsorted(find_mp3s(s)))
-
-    if not all_mp3s:
-        series = _common_parent_name(sources)
-        return {"series": series, "tracks": [], "total": 0, "episodes": []}
-
     series = _common_parent_name(sources)
-    tracks = []
-    episodes = []
-    current_episode = None
-    global_num = 1
+    all_tracks = []
+    all_episodes = []
+    offset = 1
 
-    for mp3 in all_mp3s:
-        stem = mp3.stem
-        dest_name = build_dest_name(stem, global_num) + ".mp3"
-        episode_base = _normalize_episode(stem) or series
-        if episode_base and (current_episode is None or current_episode["title"] != episode_base):
-            if current_episode:
-                current_episode["track_end"] = global_num - 1
-                episodes.append(current_episode)
-            current_episode = {"title": episode_base, "track_start": global_num, "track_end": 0}
-        tracks.append({
-            "src": str(mp3), "src_name": mp3.name,
-            "dest_preview": dest_name, "global_num": global_num,
-        })
-        global_num += 1
+    for s in sorted(sources, key=lambda p: str(p).lower()):
+        result = _scan_single(s, offset)
+        all_tracks.extend(result["tracks"])
+        all_episodes.extend(result["episodes"])
+        offset = len(all_tracks) + 1
 
-    if current_episode:
-        current_episode["track_end"] = global_num - 1
-        episodes.append(current_episode)
-
-    return {"series": series, "tracks": tracks, "total": len(tracks), "episodes": episodes}
+    return {
+        "series": series,
+        "tracks": all_tracks,
+        "total": len(all_tracks),
+        "episodes": all_episodes,
+    }
 
 
 def _common_parent_name(paths: list[Path]) -> str:
@@ -212,21 +242,3 @@ def compute_split_chunks(episodes: list[dict], total_tracks: int, max_tracks: in
 class TrackLimitError(Exception):
     pass
 
-
-def _normalize_episode(stem: str) -> str | None:
-    """Extract episode title for grouping. Returns None if no episode marker found."""
-    cleaned = LEADING_NUM.sub("", stem)
-    # Strip trailing per-episode track number (e.g. " - 01" at end)
-    cleaned = re.sub(r"\s*[-–]\s*\d{1,3}$", "", cleaned)
-    # Find episode marker anywhere in the string (not just at start)
-    m = re.search(
-        r"((?:Folge|Episode|Teil|Kapitel)\s*\d{1,3})(?:\s*[-–]\s*(.+))?",
-        cleaned,
-        re.IGNORECASE,
-    )
-    if m:
-        title = m.group(1)
-        if m.group(2):
-            title += f" - {m.group(2)}"
-        return title
-    return None

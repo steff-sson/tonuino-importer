@@ -51,32 +51,34 @@ async def run_import(
 
     imported_files = []
     episodes = []
-    current_episode = None
     global_num = next_free
 
-    for i, mp3 in enumerate(mp3s):
-        dest_name = build_dest_name(mp3.stem, global_num) + mp3.suffix
-        dest_path = dest / dest_name
+    # Episode-Gruppierung: gruppiere MP3s nach unmittelbarem Elternverzeichnis
+    grouped = _group_mp3s_by_parent(mp3s)
 
-        await asyncio.to_thread(shutil.copy2, str(mp3), str(dest_path))
-        imported_files.append(dest_name)
+    for parent, files in grouped:
+        ep_start = global_num
+        for mp3 in files:
+            dest_name = build_dest_name(mp3.stem, global_num) + mp3.suffix
+            dest_path = dest / dest_name
 
-        # Episode-Gruppierung
-        episode_title = _extract_episode_title(mp3.stem) or source.name
-        if episode_title and (current_episode is None or current_episode["title"] != episode_title):
-            if current_episode:
-                current_episode["track_end"] = global_num - 1
-                episodes.append(current_episode)
-            current_episode = {"title": episode_title, "track_start": global_num, "track_end": 0}
+            await asyncio.to_thread(shutil.copy2, str(mp3), str(dest_path))
+            imported_files.append(dest_name)
 
-        if progress_cb:
-            await progress_cb(current=global_num - next_free + 1, total=total, file=dest_name)
+            if progress_cb:
+                await progress_cb(
+                    current=global_num - next_free + 1,
+                    total=total,
+                    file=dest_name,
+                )
 
-        global_num += 1
+            global_num += 1
 
-    if current_episode:
-        current_episode["track_end"] = global_num - 1
-        episodes.append(current_episode)
+        episodes.append({
+            "title": parent.name,
+            "track_start": ep_start,
+            "track_end": global_num - 1,
+        })
 
     # .import.json schreiben
     import_file = dest / ".import.json"
@@ -218,21 +220,17 @@ def _parse_track_num(stem: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _extract_episode_title(stem: str) -> str | None:
-    """Extract episode title for grouping. Returns None if no episode marker found."""
-    import re
-    cleaned = re.sub(r"^\d{1,4}\s*[-–]\s*", "", stem)
-    # Strip trailing per-episode track number (e.g. " - 01" at end)
-    cleaned = re.sub(r"\s*[-–]\s*\d{1,3}$", "", cleaned)
-    # Find episode marker anywhere in the string (not just at start)
-    m = re.search(
-        r"((?:Folge|Episode|Teil|Kapitel)\s*\d{1,3})(?:\s*[-–]\s*(.+))?",
-        cleaned,
-        re.IGNORECASE,
-    )
-    if m:
-        title = m.group(1)
-        if m.group(2):
-            title += f" - {m.group(2)}"
-        return title
-    return None
+def _group_mp3s_by_parent(mp3s: list[Path]) -> list[tuple[Path, list[Path]]]:
+    """Group MP3 files by immediate parent directory.
+
+    Returns list of (parent, [mp3_paths]) sorted by parent path.
+    Files within each group are natsorted.
+    """
+    by_parent: dict[Path, list[Path]] = {}
+    for mp3 in mp3s:
+        parent = mp3.parent
+        by_parent.setdefault(parent, []).append(mp3)
+    return [
+        (p, natsorted(by_parent[p]))
+        for p in sorted(by_parent, key=lambda x: str(x).lower())
+    ]

@@ -19,7 +19,7 @@
 </div>
 {% endif %}
 
-{% if detail.episodes %}
+{% if detail.episodes and detail.episodes|length > 1 %}
 <div class="bg-surface rounded-xl border border-border p-5 mt-4">
 <h2 class="text-base font-semibold text-text mb-2">Folgen & Track-Zuordnung</h2>
 <div class="overflow-x-auto">
