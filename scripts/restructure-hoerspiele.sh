@@ -186,18 +186,14 @@ split_batwheels() {
 
     log_info "SPLIT: Batwheels (20 Episoden)"
 
-    # Pattern: Batwheels - NN - Title.mp3 or Batwheels - NN.mp3
     while IFS= read -r -d '' mp3; do
         local filename
         filename=$(basename "$mp3")
 
         local ep_number ep_title
-        if [[ "$filename" =~ ^Batwheels\ -\ ([0-9]{2})\ -\ (.+)\.mp3$ ]]; then
-            ep_number="${BASH_REMATCH[1]}"
+        if [[ "$filename" =~ ^Batwheels\ -\ ([0-9]{1,2})\ -\ (Episode\ [0-9]{1,2})\ -\ [0-9]{2}\.mp3$ ]]; then
+            ep_number=$(printf "%02d" "${BASH_REMATCH[1]}")
             ep_title="${BASH_REMATCH[2]}"
-        elif [[ "$filename" =~ ^Batwheels\ -\ ([0-9]{2})\.mp3$ ]]; then
-            ep_number="${BASH_REMATCH[1]}"
-            ep_title="Episode $ep_number"
         else
             log_warn "  Dateiname passt nicht zum Muster: $filename — überspringe"
             continue
@@ -218,18 +214,15 @@ split_pjmasks() {
 
     log_info "SPLIT: PJ Masks - Wir knacken den Fall! (6 Episoden)"
 
-    # Pattern: PJ Masks - NN - Title.mp3
+    # Pattern: PJ Masks - Wir knacken den Fall! - NN - Title - NN.mp3
     while IFS= read -r -d '' mp3; do
         local filename
         filename=$(basename "$mp3")
 
         local ep_number ep_title
-        if [[ "$filename" =~ ^PJ\ Masks\ -\ ([0-9]{2})\ -\ (.+)\.mp3$ ]]; then
+        if [[ "$filename" =~ ^PJ\ Masks\ -\ Wir\ knacken\ den\ Fall!\ -\ ([0-9]{2})\ -\ (.+)\ -\ [0-9]{2}\.mp3$ ]]; then
             ep_number="${BASH_REMATCH[1]}"
             ep_title="${BASH_REMATCH[2]}"
-        elif [[ "$filename" =~ ^PJ\ Masks\ -\ ([0-9]{2})\.mp3$ ]]; then
-            ep_number="${BASH_REMATCH[1]}"
-            ep_title="Episode $ep_number"
         else
             log_warn "  Dateiname passt nicht zum Muster: $filename — überspringe"
             continue
