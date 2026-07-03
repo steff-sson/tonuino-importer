@@ -6,7 +6,26 @@
 
 set -euo pipefail
 
-SOURCE_MEDIA="${1:-/home/stef/docker/media/tonuino/sd-card-complete/}"
+usage() {
+    echo "Usage: $0 --path <verzeichnis>"
+    exit 1
+}
+
+SOURCE_MEDIA=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --path)
+            [[ -z "${2:-}" ]] && usage
+            SOURCE_MEDIA="$2"
+            shift 2
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+
+[[ -z "$SOURCE_MEDIA" ]] && usage
 
 if [[ ! -d "$SOURCE_MEDIA" ]]; then
     echo "ERROR: '$SOURCE_MEDIA' ist kein Verzeichnis oder existiert nicht."
