@@ -7,7 +7,7 @@ from pathlib import Path
 from natsort import natsorted
 
 from .config import DEST_DIR, MAX_TRACKS
-from .scanner import build_dest_name, check_limit, TrackLimitError
+from .scanner import build_dest_name, check_limit, find_mp3s, TrackLimitError
 
 
 async def run_import(
@@ -35,7 +35,7 @@ async def run_import(
         if total == 0:
             raise ValueError("Keine MP3-Dateien im Quellverzeichnis")
     else:
-        mp3s = natsorted(source.rglob("*.mp3"))
+        mp3s = natsorted(find_mp3s(source))
         total = len(mp3s)
         if total == 0:
             raise ValueError("Keine MP3-Dateien im Quellverzeichnis")
@@ -133,7 +133,7 @@ async def run_split_import(
     if mp3_paths is not None:
         mp3s = mp3_paths
     else:
-        mp3s = natsorted(source.rglob("*.mp3"))
+        mp3s = natsorted(find_mp3s(source))
     total = len(mp3s)
     if total == 0:
         raise ValueError("Keine MP3-Dateien im Quellverzeichnis")

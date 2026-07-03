@@ -11,6 +11,14 @@ LEADING_NUM = re.compile(r"^\d{1,4}\s*[-–]\s*")
 FAT32_SANITIZE = re.compile(r'[<>:"/\\|?*]')
 
 
+def find_mp3s(path: Path) -> list[Path]:
+    """rglob *.mp3, filter @eaDir and non-file entries (Synology NAS metadata)."""
+    return [
+        p for p in path.rglob("*.mp3")
+        if "@eaDir" not in p.parts and p.is_file()
+    ]
+
+
 def scan_source(source: Path) -> dict:
     """Scan SOURCE directory recursively for mp3 files. Returns preview dict."""
     if not source.exists():
@@ -18,7 +26,7 @@ def scan_source(source: Path) -> dict:
     if not source.is_dir():
         raise NotADirectoryError(f"Kein Verzeichnis: {source}")
 
-    mp3s = natsorted(source.rglob("*.mp3"))
+    mp3s = natsorted(find_mp3s(source))
     if not mp3s:
         return {"series": source.name, "tracks": [], "total": 0, "episodes": []}
 
@@ -73,7 +81,7 @@ def scan_multiple_sources(sources: list[Path]) -> dict:
 
     all_mp3s = []
     for s in sorted(sources, key=lambda p: str(p).lower()):
-        all_mp3s.extend(natsorted(s.rglob("*.mp3")))
+        all_mp3s.extend(natsorted(find_mp3s(s)))
 
     if not all_mp3s:
         series = _common_parent_name(sources)
@@ -124,7 +132,7 @@ def collect_mp3s_from_paths(path_strs: list[str], nav_root: Path | None = None) 
         if nav_root and not p.is_absolute():
             p = (nav_root / ps).resolve()
         if p.exists() and p.is_dir():
-            all_mp3s.extend(natsorted(p.rglob("*.mp3")))
+            all_mp3s.extend(natsorted(find_mp3s(p)))
     return all_mp3s
 
 

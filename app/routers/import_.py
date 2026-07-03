@@ -19,7 +19,7 @@ _tasks: dict[str, dict] = {}
 
 BROWSE_ROOT = Path("/volume1/")
 NAV_ROOT = Path("/")
-SYSTEM_EXCLUDED = {"/proc", "/sys", "/dev", "/run", "/lost+found", "/snapshots", "/backups"}
+SYSTEM_EXCLUDED = {"/proc", "/sys", "/dev", "/run", "/lost+found", "/snapshots", "/backups", "@eaDir"}
 
 
 @router.get("/import")
