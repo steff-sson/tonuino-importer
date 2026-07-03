@@ -23,7 +23,7 @@
     <tr class="border-b border-border/50 hover:bg-accent/5 transition cursor-pointer"
         onclick="location.href='/sd/{{ folder.number }}'">
       <td class="py-3 px-4 font-mono font-bold text-text">{{ '%02d' % folder.number }}</td>
-      <td class="py-3 px-4 text-text truncate max-w-xs" title="{{ folder.display_title }}">{{ folder.display_title or '—' }}</td>
+      <td class="py-3 px-4 text-text line-clamp-3 break-words" title="{{ folder.display_title }}">{{ folder.display_title or '—' }}</td>
       <td class="py-3 px-4 text-right text-text-muted font-mono">{{ folder.track_count }}</td>
     </tr>
     {% endfor %}

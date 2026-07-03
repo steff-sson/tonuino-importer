@@ -5,7 +5,7 @@
 {% block content %}
 <h1 class="text-xl font-semibold text-text mb-4">Übersicht</h1>
 
-<div class="bg-surface rounded-xl border border-border p-5">
+<div class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5">
 <h2 class="text-base font-semibold text-text mb-3">Übersicht</h2>
 <div class="grid grid-cols-2 gap-2 sm:gap-4 text-center mb-4">
   <div>
@@ -19,7 +19,7 @@
 </div>
 </div>
 
-<div id="sd" class="bg-surface rounded-xl border border-border p-5 mt-4">
+<div id="sd" class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5 mt-4">
 <h2 class="text-base font-semibold text-text mb-3">SD-Ordner</h2>
 <p class="text-sm text-text-muted mb-3">{{ folders|length }} Ordner belegt, {{ total_empty }} frei (von 99).</p>
 {% if folders %}
@@ -37,7 +37,7 @@
     <tr class="border-b border-border/50 hover:bg-accent/5 transition cursor-pointer"
         onclick="location.href='/sd/{{ folder.number }}'">
       <td class="py-3 px-4 font-mono font-bold text-text">{{ '%02d' % folder.number }}</td>
-      <td class="py-3 px-4 text-text line-clamp-2 break-words max-w-[140px] sm:max-w-[200px]" title="{{ folder.display_title }}">{{ folder.display_title or '—' }}</td>
+      <td class="py-3 px-4 text-text line-clamp-3 break-words" title="{{ folder.display_title }}">{{ folder.display_title or '—' }}</td>
       <td class="py-3 px-4 text-right text-text-muted font-mono">{{ folder.track_count }}</td>
     </tr>
     {% endfor %}

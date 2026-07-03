@@ -9,7 +9,7 @@
 </div>
 
 {% if detail.import_data %}
-<div class="bg-surface rounded-xl border border-border p-5">
+<div class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5">
 <h2 class="text-base font-semibold text-text mb-2">Import-Info</h2>
 <dl class="text-sm grid grid-cols-2 gap-x-4 gap-y-1">
   <dt class="text-text-muted">Serie:</dt><dd class="text-text">{{ detail.import_data.series }}</dd>
@@ -20,7 +20,7 @@
 {% endif %}
 
 {% if detail.episodes and detail.episodes|length > 1 %}
-<div class="bg-surface rounded-xl border border-border p-5 mt-4">
+<div class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5 mt-4">
 <h2 class="text-base font-semibold text-text mb-2">Folgen & Track-Zuordnung</h2>
 <div class="overflow-x-auto">
 <table class="w-full text-sm min-w-[320px]">
@@ -34,7 +34,7 @@
   <tbody>
     {% for ep in detail.episodes %}
     <tr>
-      <td class="py-2 px-3 border-b border-border/50 text-text line-clamp-2 break-words min-w-0" title="{{ ep.title }}">{{ ep.title }}</td>
+      <td class="py-2 px-3 border-b border-border/50 text-text line-clamp-3 break-words min-w-0" title="{{ ep.title }}">{{ ep.title }}</td>
       <td class="py-2 px-3 border-b border-border/50 font-mono text-text text-xs whitespace-nowrap">{{ '%03d' % ep.track_start }}–{{ '%03d' % ep.track_end }}</td>
       <td class="py-2 px-3 border-b border-border/50 text-right text-text text-xs">{{ ep.track_end - ep.track_start + 1 }}</td>
     </tr>
@@ -45,7 +45,7 @@
 </div>
 {% endif %}
 
-<div class="bg-surface rounded-xl border border-border p-5 mt-4">
+<div class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5 mt-4">
 <h2 class="text-base font-semibold text-text mb-2">Tracks ({{ detail.tracks|length }})</h2>
 {% if detail.tracks %}
 <button onclick="clearFolder({{ detail.number }})"
@@ -78,7 +78,7 @@ function clearFolder(num) {
     {% for t in detail.tracks %}
     <tr>
       <td class="py-1 px-3 border-b border-border/50 font-mono text-text">{{ '%03d' % t.num }}</td>
-      <td class="py-1 px-3 border-b border-border/50 text-text line-clamp-2 break-words text-xs min-w-0" title="{{ t.name }}">{{ t.name }}</td>
+      <td class="py-1 px-3 border-b border-border/50 text-text line-clamp-3 break-words text-xs min-w-0" title="{{ t.name }}">{{ t.name }}</td>
       <td class="py-1 px-3 border-b border-border/50 text-right text-text-muted">{{ t.size_kb }}</td>
     </tr>
     {% endfor %}

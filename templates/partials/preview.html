@@ -54,7 +54,7 @@
     {% for chunk in split_chunks %}
     <tr class="border-b border-border/50">
       <td class="py-2 px-2">
-        <select class="chunk-folder bg-surface border border-border rounded px-2 py-1 text-sm text-text"
+        <select class="chunk-folder px-3 py-3 bg-surface-light border border-border rounded-lg text-text text-base"
                 data-chunk="{{ loop.index0 }}">
           {% for f in free_folders %}
           <option value="{{ f }}" {% if f == chunk.folder_number %}selected{% endif %}>
@@ -69,7 +69,7 @@
           {{ '%03d' % chunk.track_start }}–{{ '%03d' % chunk.track_end }}
         </div>
       </td>
-      <td class="py-2 px-3 text-text text-xs line-clamp-2 break-words min-w-0"
+      <td class="py-2 px-3 text-text text-xs line-clamp-3 break-words min-w-0"
           title="{% for ep in chunk.episodes %}{{ ep.title }}{% if not loop.last %}, {% endif %}{% endfor %}">
         {% for ep in chunk.episodes[:2] %}
           {{ ep.title }}{% if not loop.last %}, {% endif %}
@@ -84,7 +84,14 @@
 </table>
 </div>
 
-<div class="flex items-center gap-2 mt-4">
+<div id="progress-container-split" class="hidden mt-4">
+  <div class="bg-surface-light rounded-full h-4 overflow-hidden">
+    <div id="progress-bar-split" class="bg-accent h-full transition-all duration-300" style="width: 0%"></div>
+  </div>
+  <p id="progress-text-split" class="text-sm text-text-muted mt-1"></p>
+</div>
+
+<div class="flex items-center gap-2 mt-4 mb-3">
   <label class="flex items-center justify-center w-11 h-11 shrink-0 cursor-pointer">
     <input type="checkbox" id="split-overwrite" name="overwrite"
            class="rounded border-border bg-surface-light text-accent focus:ring-accent w-5 h-5">

@@ -21,7 +21,7 @@
 <div id="import-flow" data-step="1">
 
 <!-- Phase 1: Quelle wählen -->
-<div id="phase-1" class="bg-surface rounded-xl border border-border p-5">
+<div id="phase-1" class="bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5">
   <h2 class="text-base font-semibold text-text mb-3">Quelle wählen</h2>
   <p class="text-xs text-text-muted mb-4">
     <span class="hidden sm:inline">Navigiere zum Ordner mit den MP3-Dateien und klicke auf "Vorschau laden →".</span>
@@ -68,7 +68,7 @@
   
   <div id="preview"></div>
   
-  <div id="import-form-card" class="hidden bg-surface rounded-xl border border-border p-5 mt-4">
+  <div id="import-form-card" class="hidden bg-surface rounded-xl border border-border shadow-lg shadow-black/15 p-5 mt-4">
     <h2 class="text-base font-semibold text-text mb-3">Importieren</h2>
     <form id="import-form">
       <input type="hidden" name="source" id="import-source">
@@ -88,7 +88,7 @@
         </select>
       </div>
 
-      <div class="flex items-center gap-2 mt-3">
+      <div class="flex items-center gap-2 mt-3 mb-4">
         <input type="checkbox" id="overwrite-checkbox" name="overwrite"
                class="rounded border-border bg-surface-light text-accent focus:ring-accent">
         <label for="overwrite-checkbox" class="text-sm text-text-muted">
@@ -430,12 +430,27 @@ document.getElementById('import-form')?.addEventListener('submit', function(e) {
 
 
 function startProgress(taskId, btn) {
-  document.getElementById('progress-container').classList.remove('hidden');
+  var container = document.getElementById('progress-container');
+  var bar = document.getElementById('progress-bar');
+  var text = document.getElementById('progress-text');
+
+  // Fallback: split-import uses different IDs in preview.html
+  if (!container) {
+    container = document.getElementById('progress-container-split');
+    bar = document.getElementById('progress-bar-split');
+    text = document.getElementById('progress-text-split');
+  }
+
+  container.classList.remove('hidden');
+  // Reset progress bar color (in case previous run ended in error)
+  bar.classList.remove('bg-error');
+  bar.classList.add('bg-accent');
+  bar.style.width = '0%';
   const source = new EventSource('/api/import/progress/' + taskId);
   source.addEventListener('progress', function(e) {
     const d = JSON.parse(e.data);
-    document.getElementById('progress-bar').style.width = d.percent + '%';
-    document.getElementById('progress-text').textContent = d.file + ' (' + d.current + '/' + d.total + ')';
+    bar.style.width = d.percent + '%';
+    text.textContent = d.file + ' (' + d.current + '/' + d.total + ')';
     var statusEl = document.getElementById('import-status');
     if (statusEl) {
       statusEl.classList.remove('hidden');
@@ -444,8 +459,8 @@ function startProgress(taskId, btn) {
   });
   source.addEventListener('complete', function(e) {
     const d = JSON.parse(e.data);
-    document.getElementById('progress-bar').style.width = '100%';
-    document.getElementById('progress-text').textContent = 'Abgeschlossen!';
+    bar.style.width = '100%';
+    text.textContent = 'Abgeschlossen!';
     source.close();
     if (btn) btn.disabled = false;
 
@@ -492,8 +507,9 @@ function startProgress(taskId, btn) {
   });
   source.addEventListener('error', function(e) {
     const d = JSON.parse(e.data);
-    document.getElementById('progress-text').textContent = 'Fehler: ' + d.message;
-    document.getElementById('progress-bar').classList.add('bg-error');
+    text.textContent = 'Fehler: ' + d.message;
+    bar.classList.remove('bg-accent');
+    bar.classList.add('bg-error');
     source.close();
     if (btn) btn.disabled = false;
   });
@@ -511,6 +527,15 @@ function resetAll() {
   document.getElementById('preview').innerHTML = '';
   document.getElementById('result').innerHTML = '';
   document.getElementById('import-source').value = '';
+  // Reset progress bar color
+  ['progress-bar', 'progress-bar-split'].forEach(function(id) {
+    var bar = document.getElementById(id);
+    if (bar) {
+      bar.classList.remove('bg-error');
+      bar.classList.add('bg-accent');
+      bar.style.width = '0%';
+    }
+  });
 }
 </script>
 {% endblock %}

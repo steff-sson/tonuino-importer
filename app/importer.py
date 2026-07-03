@@ -140,6 +140,19 @@ async def run_split_import(
     if total == 0:
         raise ValueError("Keine MP3-Dateien im Quellverzeichnis")
 
+    # Check limit for each target folder (only when appending)
+    if not overwrite:
+        for chunk in chunks:
+            dest = DEST_DIR / f"{chunk['folder_number']:02d}"
+            chunk_total = chunk["track_count"]
+            existing = len(list(dest.glob("*.mp3"))) if dest.exists() else 0
+            if existing + chunk_total > MAX_TRACKS:
+                raise TrackLimitError(
+                    f"Zielordner {chunk['folder_number']:02d} hat bereits {existing} Track(s). "
+                    f"Mit {chunk_total} neuen wären es {existing + chunk_total} — "
+                    f"Maximum ist {MAX_TRACKS}."
+                )
+
     results = []
     global_done = 0
 
