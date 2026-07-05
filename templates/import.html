@@ -290,9 +290,9 @@ function scanSelectedFolders() {
   if (window._multiSelectedPaths.size === 0) return;
   var paths = Array.from(window._multiSelectedPaths);
 
-  const firstPath = paths[0];
-  const commonParent = firstPath.substring(0, firstPath.lastIndexOf('/'));
-  document.getElementById('import-source').value = commonParent;
+  const sourcePath = paths.length === 1 ? paths[0]
+    : paths[0].substring(0, paths[0].lastIndexOf('/'));
+  document.getElementById('import-source').value = sourcePath;
   goToPhase2();
   document.getElementById('file-browser').classList.add('hidden');
   document.getElementById('selection-display').classList.add('hidden');

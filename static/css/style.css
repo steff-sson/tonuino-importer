@@ -1,4 +1,5 @@
 @import "@steff-sson/automation-themes/css/theme.css";
+@config "../../tailwind.config.js";
 
 @source "../../templates";
 @source "../../node_modules/@steff-sson/automation-themes/templates";
